@@ -19,10 +19,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Do SignalR things!
 
-    // Create a function that the hub can call to broadcast messages.
-    connection.on('broadcastMessage', function (name, message) {
-    });
-
     // On click handler for the "send" button
     document.getElementById('sendmessage').addEventListener('click', function (event) {
         // Send the message somehow?
