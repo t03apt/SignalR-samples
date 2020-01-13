@@ -2,6 +2,7 @@
 <html>
 <head>
     <title>SignalR Simple Chat</title>
+    <base href="/signalr-sample/" />
     <style type="text/css">
         .container {
             background-color: #99CCFF;
@@ -33,7 +34,7 @@
 
             // Start the connection.
             var connection = new signalR.HubConnectionBuilder()
-                                .withUrl('/chat')
+                                .withUrl('chat')
                                 .build();
 
             // Create a function that the hub can call to broadcast messages.
@@ -45,6 +46,10 @@
                 var liElement = document.createElement('li');
                 liElement.innerHTML = '<strong>' + encodedName + '</strong>:&nbsp;&nbsp;' + encodedMsg;
                 document.getElementById('discussion').appendChild(liElement);
+            });
+
+            connection.onclose(error => {
+              console.log('Signalr connection closed', error);
             });
 
             // Transport fallback functionality is now built into start.

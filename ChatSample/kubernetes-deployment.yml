@@ -1,0 +1,91 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: signalr-sample
+spec:
+  type: ClusterIP
+  clusterIP: None
+  selector:
+    app: signalr-sample
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 80
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: signalr-sample
+  labels:
+    app: signalr-sample
+spec:
+  serviceName: signalr-sample
+  replicas: 1
+  selector:
+    matchLabels:
+      app: signalr-sample
+  template:
+    metadata:
+      labels:
+        app: signalr-sample
+    spec:
+      containers:
+      - name: signalr-sample
+        image: t03apt/chatsample:latest
+        ports:
+        - containerPort: 80
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        env:
+        - name: ASPNETCORE_ENVIRONMENT
+          value: Production
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - signalr-sample
+              topologyKey: kubernetes.io/hostname  
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: signalr-sample
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/affinity: "cookie"
+    nginx.ingress.kubernetes.io/base-url-scheme: http
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/session-cookie-name: "route"
+    nginx.ingress.kubernetes.io/session-cookie-expires: "172800"
+    nginx.ingress.kubernetes.io/session-cookie-max-age: "172800"
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+       more_set_headers 'Access-Control-Allow-Origin: $http_origin';
+       more_set_headers 'Access-Control-Allow-Credentials: true';
+       more_set_headers 'Access-Control-Allow-Methods: GET, PUT, POST, DELETE, PATCH, OPTIONS';
+       more_set_headers 'Access-Control-Allow-Headers: DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Authorization';
+       more_set_headers 'Access-Control-Max-Age: 1728000';
+       if ($request_method = 'OPTIONS') {
+         more_set_headers 'Content-Type: text/plain charset=UTF-8';
+         more_set_headers 'Content-Length: 0';
+         return 204;
+       }
+spec:
+  rules:
+  - http:
+      paths:
+      - backend:
+          serviceName: signalr-sample
+          servicePort: 80
+        path: /signalr-sample
